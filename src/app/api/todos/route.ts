@@ -1,17 +1,30 @@
+import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const todos  = [
-    {id:1, title: "Learn DevOps", completed: false},
-];
+const prisma = new PrismaClient();
 
 export async function GET() {
-    return NextResponse.json(todos);
+  const todos = await prisma.todo.findMany({ orderBy: { id: "asc" } });
+  return NextResponse.json(todos);
 }
 
-
 export async function POST(req: Request) {
-    const {title} = await req.json();
-    const id = todos.length + 1;
-    todos.push({id, title, completed: false});
-    return NextResponse.json({id, title, completed: false});
+  const { title } = await req.json();
+  const newTodo = await prisma.todo.create({ data: { title } });
+  return NextResponse.json(newTodo);
+}
+
+export async function PUT(req: Request) {
+  const { id, completed } = await req.json();
+  const updated = await prisma.todo.update({
+    where: { id },
+    data: { completed },
+  });
+  return NextResponse.json(updated);
+}
+
+export async function DELETE(req: Request) {
+  const { id } = await req.json();
+  await prisma.todo.delete({ where: { id } });
+  return NextResponse.json({ success: true });
 }

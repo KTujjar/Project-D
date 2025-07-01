@@ -11,6 +11,7 @@ export default function Home() {
     fetch("/api/todos").then(r => r.json()).then(setTodos);
   }, []);
 
+
   const add = async () => {
     if (!text.trim()) return;
     const res = await fetch("/api/todos", {
@@ -21,6 +22,27 @@ export default function Home() {
     setTodos([...todos, newTodo]);
     setText("");
   };
+
+
+  const updateComplete = async (todo: Todo) => {
+    const res = await fetch("/api/todos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: todo.id, completed: !todo.completed }),
+    });
+    const updated = await res.json();
+    setTodos(todos.map(t => t.id === updated.id ? updated : t));
+  };
+
+  const deleteTodo = async (id: number) => {
+    await fetch("/api/todos", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setTodos(todos.filter(t => t.id !== id));
+  };
+
 
   return (
     <div className="max-w-md mx-auto mt-10 p-4 bg-white shadow rounded">
@@ -39,10 +61,25 @@ export default function Home() {
       </div>
 
       <ul>
-        {todos.map((td) => (
+        {todos.map(td => (
           <li key={td.id} className="flex justify-between py-2 border-b text-black">
-            <span>{td.title}</span>
-            <span>{td.completed ? "✅" : "🕓"}</span>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={td.completed}
+                onChange={() => updateComplete(td)}
+                className="mr-2"
+              />
+              <span className={td.completed ? "line-through text-gray-500" : ""}>
+                {td.title}
+              </span>
+            </div>
+            <button
+              onClick={() => deleteTodo(td.id)}
+              className="text-red-600 hover:text-red-800"
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
